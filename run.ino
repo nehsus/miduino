@@ -39,10 +39,9 @@ Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC);
 UTFT myGLCD(ILI9341_S5P,MOSI,SCK,10,8,9);
 
  //touch panel (TCLK, TCS, TDIN, TDOUT, IRQ), XPT2046
-UTouch  myTouch( 6, 5, 4, 3, 2);
+UTouch myTouch( 6, 5, 4, 3, 2);
 
 extern uint8_t BigFont[];
-int x, y, textSize;
 
 void setup()
 {
@@ -52,34 +51,40 @@ void setup()
   
   Serial.println(F("Starting up.."));
   delay(10);
-  Serial.println(FillScreen(ILI9341_WHITE));
+  Serial.println(FillScreen(ILI9341_BLACK));
   delay(10);
   Serial.println(FillAxes());
   delay(30);
-  Serial.println("Klaarty");
 
-  myTouch.InitTouch();
-  myTouch.setPrecision(PREC_HI);  
+  myGLCD.InitLCD(LANDSCAPE);
+  myGLCD.clrScr();
+  myGLCD.setFont(BigFont);
+  Serial.println("Klaarty");
+  delay(30)
+  myGLCD.clrScr();
+
+  myTouch.InitTouch(LANDSCAPE);
+  myTouch.setPrecision(PREC_EXTREME);
 }
 
 void loop()
 {
-  while (true)
+  long x, y;
+  //byte valueX;
+  //byte valueY;  
+  while (myTouch.dataAvailable() == true) 
   {
-    if (myTouch.dataAvailable())
-    {
-      myTouch.read();
-      x=myTouch.getX();
-      y=myTouch.getY();
+    myTouch.read();
+    x=myTouch.getX();
+    y=myTouch.getY();
 
-      Serial.println(FillPointer(x, y))    
-      Serial.print("x= ");
-      Serial.print(x);    
-      Serial.print("   y= ");            
-      Serial.print(y);  
-      Serial.println("   ");    
+    FillPointer(x, y);
+    Serial.print("x= ");
+    Serial.print(x);    
+    Serial.print("   y= ");            
+    Serial.print(y);  
+    Serial.println("   ");    
 
-    }
   }
 }
 
@@ -97,16 +102,16 @@ unsigned long FillAxes() {
 
   //tft.fillScreen(ILI9341_BLACK);
   //yield();
-  tft.drawLine(0, h/2, w-1, h/2, ILI9341_BLACK);
-  tft.drawLine(w/2, 0, w/2, h-1, ILI9341_BLACK);
+  tft.drawLine(0, h/2, w-1, h/2, ILI9341_DARKGREEN);
+  tft.drawLine(w/2, 0, w/2, h-1, ILI9341_DARKGREEN);
 
   yield();
   return micros() - start;
 }
 
-unsigned long FillPointer(int x, int y) {
+unsigned long FillPointer(long x, long y) {
   unsigned long start = micros();
-  tft.fillCircle(x, y, 1, ILI9341_PURPLE);
+  tft.fillCircle(x, y, 1, ILI9341_DARKGREEN);
   yield();
   return micros() - start;  
 }
