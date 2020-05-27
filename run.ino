@@ -69,22 +69,26 @@ void setup()
 
 void loop()
 {
-  long x, y;
+  long x, y, oldX, oldY;
   //byte valueX;
   //byte valueY;  
   while (myTouch.dataAvailable() == true) 
   {
+    if (oldX) {
+        FillPointer(oldY, oldX, ILI9341_BLACK);
+    }
     myTouch.read();
     x=myTouch.getX();
     y=myTouch.getY();
 
-    FillPointer(x, y);
+    FillPointer(x, y, ILI9341_DARKGREEN);
     Serial.print("x= ");
     Serial.print(x);    
     Serial.print("   y= ");            
     Serial.print(y);  
     Serial.println("   ");    
-
+    oldX=x
+    oldY=y
   }
 }
 
@@ -109,9 +113,9 @@ unsigned long FillAxes() {
   return micros() - start;
 }
 
-unsigned long FillPointer(long x, long y) {
+unsigned long FillPointer(long x, long y, uint16_t color) {
   unsigned long start = micros();
-  tft.fillCircle(x, y, 1, ILI9341_DARKGREEN);
+  tft.fillCircle(x, y, 1, color);
   yield();
   return micros() - start;  
 }
