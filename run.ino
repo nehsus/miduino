@@ -6,7 +6,7 @@
 #include <UTFT.h>
 #include <UTouch.h>
 
-#define pad_bk 0,125,0 
+#define pad_bg 0,0,0 
 #define reticle_color 123,125,0 //R,G,B
 
 #define pad_topX 10
@@ -64,8 +64,6 @@ void setup()
   delay(10);
   Serial.println(FillScreen(ILI9341_BLACK));
   delay(10);
-  Serial.println(FillAxes());
-  delay(30);
 
 
   Serial.println("Klaarty");
@@ -84,24 +82,17 @@ void loop()
   //byte valueY;  
   while (myTouch.dataAvailable() == true) 
   {
+    myTouch.read();
+    x = myTouch.getX();
+    y = myTouch.getY();
     if ((x!=-1) and (y!=-1))
     {
       
       if((x>=pad_topX) and (x<=pad_bottomX) and (y>=pad_topX) and (y <=pad_bottomY)) // XY pad touch
       {
-        delay(50); 
-        myTouch.read();
-        x = myTouch.getTouchX();
-        y = myTouch.getTouchY();
-
-        myGLCD.setColor(0, 0, 0);
-        myGLCD.drawPixel (oldX, oldY);
-        
-        myGLCD.setColor(0, 125, 0);
-        myGLCD.drawPixel (x, y);
-        oldX = x;
-        oldY = y;
-
+        draw_Pad(x,y);
+        old_x=x;
+        old_y=y;
         Serial.print("x= ");
         Serial.print(x);    
         Serial.print("   y= ");            
@@ -142,12 +133,12 @@ unsigned long FillPointer(long x, long y, uint16_t color) {
 
 void draw_Main() {
   unsigned long start = micros();
-  myGLCD.setColor(pad_bk);
+  myGLCD.setColor(pad_bg);
   myGLCD.fillRect(pad_topX-2,pad_topY-2,pad_bottomX+2,pad_bottomY+2);
   myGLCD.setColor(reticle_color);
   myGLCD.drawRect(pad_topX-2,pad_topY-2,pad_bottomX+2,pad_bottomY+2);  
-  myGLCD.setColor(pad_bk);
-  myGLCD.setBackColor(pad_bk);
+  myGLCD.setColor(pad_bg);
+  myGLCD.setBackColor(pad_bg);
 
   myGLCD.fillRect(239,8,312,58); //button1 background 
   myGLCD.fillRect(239,68,312,116); //button2 background 
@@ -166,4 +157,27 @@ void draw_Main() {
 
   yield();
   return micros() - start;  
+}
+
+void draw_Pad(long x, long y)
+{
+      // we draw 3 three lines for x and three lines for y
+      // for better visibility
+      unsigned long start = micros();
+      myGLCD.setColor(pad_bg);
+      myGLCD.drawLine(old_x-1,pad_topY,old_x-1,pad_bottomY); // clear old line x-1
+      myGLCD.drawLine(old_x+1,pad_topY,old_x+1,pad_bottomY); // clear old line x+1
+      myGLCD.drawLine(old_x,pad_topY,old_x,pad_bottomY);     // clear old line x
+      myGLCD.drawLine(pad_topX,old_y-1,pad_bottomY,old_y-1); // clear old line y-1    
+      myGLCD.drawLine(pad_topX,old_y+1,pad_bottomY,old_y+1); // clear old line y+1    
+      myGLCD.drawLine(pad_topX,old_y,pad_bottomY,old_y);     // clear old line y
+      myGLCD.setColor(reticle_color);
+      myGLCD.drawLine(x-1,pad_topY,x-1,pad_bottomY);         // draw new line x-1
+      myGLCD.drawLine(x+1,pad_topY,x+1,pad_bottomY);         // draw new line x+1
+      myGLCD.drawLine(x,pad_topY,x,pad_bottomY);             // draw new line x
+      myGLCD.drawLine(pad_topX,y-1,pad_bottomX,y-1);         // draw new line1 y-1
+      myGLCD.drawLine(pad_topX,y+1,pad_bottomX,y+1);         // draw new line2 y+1
+      myGLCD.drawLine(pad_topX,y,pad_bottomX,y);             // draw new line3 y
+      yield();
+      return micros() - start;  
 }
