@@ -6,6 +6,13 @@
 #include <UTFT.h>
 #include <UTouch.h>
 
+#define pad_bk 0,125,0 
+#define reticle_color 123,125,0 //R,G,B
+
+#define pad_topX 10
+#define pad_topY 10
+#define pad_bottomX 229
+#define pad_bottomY 229
 
 #define ILI9341_BLACK       0x0000  ///<   0,   0,   0
 #define ILI9341_NAVY        0x000F  ///<   0,   0, 123
@@ -39,7 +46,7 @@ Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC);
 UTFT myGLCD(ILI9341_S5P,MOSI,SCK,10,8,9);
 
  //touch panel (TCLK, TCS, TDIN, TDOUT, IRQ), XPT2046
-UTouch myTouch( 6, 5, 4, 3, 2);
+UTouch myTouch(6, 5, 4, 3, 2);
 
 extern uint8_t BigFont[];
 
@@ -48,7 +55,11 @@ void setup()
   Serial.begin(9600);
  
   tft.begin();
-  
+ 
+  myGLCD.InitLCD(LANDSCAPE);
+  myGLCD.clrScr();
+  myTouch.InitTouch(LANDSCAPE);
+
   Serial.println(F("Starting up.."));
   delay(10);
   Serial.println(FillScreen(ILI9341_BLACK));
@@ -56,15 +67,14 @@ void setup()
   Serial.println(FillAxes());
   delay(30);
 
-  myGLCD.InitLCD(LANDSCAPE);
-  myGLCD.clrScr();
-  myGLCD.setFont(BigFont);
+
   Serial.println("Klaarty");
   delay(30)
   myGLCD.clrScr();
 
-  myTouch.InitTouch(LANDSCAPE);
   myTouch.setPrecision(PREC_EXTREME);
+
+  draw_Main()
 }
 
 void loop()
@@ -74,21 +84,31 @@ void loop()
   //byte valueY;  
   while (myTouch.dataAvailable() == true) 
   {
-    if (oldX) {
-        FillPointer(oldY, oldX, ILI9341_BLACK);
-    }
-    myTouch.read();
-    x=myTouch.getX();
-    y=myTouch.getY();
+    if ((x!=-1) and (y!=-1))
+    {
+      
+      if((x>=pad_topX) and (x<=pad_bottomX) and (y>=pad_topX) and (y <=pad_bottomY)) // XY pad touch
+      {
+        delay(50); 
+        myTouch.read();
+        x = myTouch.getTouchX();
+        y = myTouch.getTouchY();
 
-    FillPointer(x, y, ILI9341_DARKGREEN);
-    Serial.print("x= ");
-    Serial.print(x);    
-    Serial.print("   y= ");            
-    Serial.print(y);  
-    Serial.println("   ");    
-    oldX=x
-    oldY=y
+        myGLCD.setColor(0, 0, 0);
+        myGLCD.drawPixel (oldX, oldY);
+        
+        myGLCD.setColor(0, 125, 0);
+        myGLCD.drawPixel (x, y);
+        oldX = x;
+        oldY = y;
+
+        Serial.print("x= ");
+        Serial.print(x);    
+        Serial.print("   y= ");            
+        Serial.print(y);  
+        Serial.println("   ");    
+      }
+    }
   }
 }
 
@@ -115,7 +135,35 @@ unsigned long FillAxes() {
 
 unsigned long FillPointer(long x, long y, uint16_t color) {
   unsigned long start = micros();
-  tft.fillCircle(x, y, 1, color);
+  tft.fillCircle(x, y, 3, color);
+  yield();
+  return micros() - start;  
+}
+
+void draw_Main() {
+  unsigned long start = micros();
+  myGLCD.setColor(pad_bk);
+  myGLCD.fillRect(pad_topX-2,pad_topY-2,pad_bottomX+2,pad_bottomY+2);
+  myGLCD.setColor(reticle_color);
+  myGLCD.drawRect(pad_topX-2,pad_topY-2,pad_bottomX+2,pad_bottomY+2);  
+  myGLCD.setColor(pad_bk);
+  myGLCD.setBackColor(pad_bk);
+
+  myGLCD.fillRect(239,8,312,58); //button1 background 
+  myGLCD.fillRect(239,68,312,116); //button2 background 
+  myGLCD.fillRect(239,124,312,174); //button3 background 
+  myGLCD.fillRect(239,182,312,232); //button4 background 
+  myGLCD.setColor(reticle_color);
+  myGLCD.drawRect(239,8,312,58); //button1 rectangle
+  myGLCD.drawRect(239,68,312,116); //button2 rectangle
+  myGLCD.drawRect(239,124,312,174); //button3 rectangle
+  myGLCD.drawRect(239,182,312,232); //button4rectangle
+
+  myGLCD.print("MIDI",240,22); //button1 text
+  myGLCD.print("X",240,78); //button2 text - line 1
+  myGLCD.print("Y",240,134); //button3 text - line 1
+  myGLCD.print("X+Y",240,192); //button4 text - line 1
+
   yield();
   return micros() - start;  
 }
