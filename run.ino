@@ -6,7 +6,7 @@
 #include <UTFT.h>
 #include <UTouch.h>
 
-#define pad_bg 0,0,0 
+#define pad_bg 0,125,0 
 #define reticle_color 123,125,0 //R,G,B
 
 #define pad_topX 10
@@ -48,18 +48,20 @@ UTFT myGLCD(ILI9341_S5P,MOSI,SCK,10,8,9);
  //touch panel (TCLK, TCS, TDIN, TDOUT, IRQ), XPT2046
 UTouch myTouch(6, 5, 4, 3, 2);
 
-extern uint8_t BigFont[];
+long old_x=10, old_y=10;
 
 void setup()
 {
+
   Serial.begin(9600);
- 
   tft.begin();
  
+  
   myGLCD.InitLCD(LANDSCAPE);
-  myGLCD.clrScr();
   myTouch.InitTouch(LANDSCAPE);
+  myGLCD.clrScr();
 
+  
   Serial.println(F("Starting up.."));
   delay(10);
   Serial.println(FillScreen(ILI9341_BLACK));
@@ -70,14 +72,14 @@ void setup()
   delay(30)
   myGLCD.clrScr();
 
-  myTouch.setPrecision(PREC_EXTREME);
+  myTouch.setPrecision(PREC_MEDIUM);
 
-  draw_Main()
+  draw_Main();
 }
 
 void loop()
 {
-  long x, y, oldX, oldY;
+  long x, y;
   //byte valueX;
   //byte valueY;  
   while (myTouch.dataAvailable() == true) 
@@ -133,28 +135,26 @@ unsigned long FillPointer(long x, long y, uint16_t color) {
 
 void draw_Main() {
   unsigned long start = micros();
-  myGLCD.setColor(pad_bg);
-  myGLCD.fillRect(pad_topX-2,pad_topY-2,pad_bottomX+2,pad_bottomY+2);
-  myGLCD.setColor(reticle_color);
-  myGLCD.drawRect(pad_topX-2,pad_topY-2,pad_bottomX+2,pad_bottomY+2);  
-  myGLCD.setColor(pad_bg);
-  myGLCD.setBackColor(pad_bg);
+  tft.fillRect(pad_topX-2,pad_topY-2,pad_bottomX+2,pad_bottomY+2, pad_bg);
+  tft.drawRect(pad_topX-2,pad_topY-2,pad_bottomX+2,pad_bottomY+2, reticle_color);  
 
-  myGLCD.fillRect(239,8,312,58); //button1 background 
-  myGLCD.fillRect(239,68,312,116); //button2 background 
-  myGLCD.fillRect(239,124,312,174); //button3 background 
-  myGLCD.fillRect(239,182,312,232); //button4 background 
-  myGLCD.setColor(reticle_color);
-  myGLCD.drawRect(239,8,312,58); //button1 rectangle
-  myGLCD.drawRect(239,68,312,116); //button2 rectangle
-  myGLCD.drawRect(239,124,312,174); //button3 rectangle
-  myGLCD.drawRect(239,182,312,232); //button4rectangle
 
-  myGLCD.print("MIDI",240,22); //button1 text
-  myGLCD.print("X",240,78); //button2 text - line 1
-  myGLCD.print("Y",240,134); //button3 text - line 1
-  myGLCD.print("X+Y",240,192); //button4 text - line 1
+  tft.fillRect(239,8,312,58, ILI9341_BLACK); //button1 background 
+  tft.fillRect(239,68,312,116, ILI9341_BLACK); //button2 background 
+  tft.fillRect(239,124,312,174, ILI9341_BLACK); //button3 background 
+  tft.fillRect(239,182,312,232, ILI9341_BLACK); //button4 background 
+  
+  //Draw in green
+  tft.drawRect(239,8,312,58, ILI9341_DARKGREEN); //button1 rectangle
+  tft.drawRect(239,68,312,116, ILI9341_DARKGREEN); //button2 rectangle
+  tft.drawRect(239,124,312,174, ILI9341_DARKGREEN); //button3 rectangle
+  tft.drawRect(239,182,312,232, ILI9341_DARKGREEN); //button4rectangle
 
+  tft.print("MIDI",240,22,); //button1 text
+  tft.print("X",240,78); //button2 text - line 1
+  tft.print("Y",240,134); //button3 text - line 1
+  tft.print("X+Y",240,192); //button4 text - line 1
+  
   yield();
   return micros() - start;  
 }
@@ -164,20 +164,21 @@ void draw_Pad(long x, long y)
       // we draw 3 three lines for x and three lines for y
       // for better visibility
       unsigned long start = micros();
-      myGLCD.setColor(pad_bg);
-      myGLCD.drawLine(old_x-1,pad_topY,old_x-1,pad_bottomY); // clear old line x-1
-      myGLCD.drawLine(old_x+1,pad_topY,old_x+1,pad_bottomY); // clear old line x+1
-      myGLCD.drawLine(old_x,pad_topY,old_x,pad_bottomY);     // clear old line x
-      myGLCD.drawLine(pad_topX,old_y-1,pad_bottomY,old_y-1); // clear old line y-1    
-      myGLCD.drawLine(pad_topX,old_y+1,pad_bottomY,old_y+1); // clear old line y+1    
-      myGLCD.drawLine(pad_topX,old_y,pad_bottomY,old_y);     // clear old line y
-      myGLCD.setColor(reticle_color);
-      myGLCD.drawLine(x-1,pad_topY,x-1,pad_bottomY);         // draw new line x-1
-      myGLCD.drawLine(x+1,pad_topY,x+1,pad_bottomY);         // draw new line x+1
-      myGLCD.drawLine(x,pad_topY,x,pad_bottomY);             // draw new line x
-      myGLCD.drawLine(pad_topX,y-1,pad_bottomX,y-1);         // draw new line1 y-1
-      myGLCD.drawLine(pad_topX,y+1,pad_bottomX,y+1);         // draw new line2 y+1
-      myGLCD.drawLine(pad_topX,y,pad_bottomX,y);             // draw new line3 y
+      
+      tft.drawLine(old_x-1,pad_topY,old_x-1,pad_bottomY, ILI9341_BLACK); // clear old line x-1
+      tft.drawLine(old_x+1,pad_topY,old_x+1,pad_bottomY, ILI9341_BLACK); // clear old line x+1
+      tft.drawLine(old_x,pad_topY,old_x,pad_bottomY, ILI9341_BLACK);     // clear old line x
+      tft.drawLine(pad_topX,old_y-1,pad_bottomY,old_y-1, ILI9341_BLACK); // clear old line y-1    
+      tft.drawLine(pad_topX,old_y+1,pad_bottomY,old_y+1, ILI9341_BLACK); // clear old line y+1    
+      tft.drawLine(pad_topX,old_y,pad_bottomY,old_y, ILI9341_BLACK);     // clear old line y
+      //Draw in green
+      tft.drawLine(x-1,pad_topY,x-1,pad_bottomY, ILI9341_DARKGREEN);         // draw new line x-1
+      tft.drawLine(x+1,pad_topY,x+1,pad_bottomY, ILI9341_DARKGREEN);         // draw new line x+1
+      tft.drawLine(x,pad_topY,x,pad_bottomY, ILI9341_DARKGREEN);             // draw new line x
+      tft.drawLine(pad_topX,y-1,pad_bottomX,y-1, ILI9341_DARKGREEN);         // draw new line1 y-1
+      tft.drawLine(pad_topX,y+1,pad_bottomX,y+1, ILI9341_DARKGREEN);         // draw new line2 y+1
+      tft.drawLine(pad_topX,y,pad_bottomX,y, ILI9341_DARKGREEN);             // draw new line3 y
+      
       yield();
       return micros() - start;  
 }
